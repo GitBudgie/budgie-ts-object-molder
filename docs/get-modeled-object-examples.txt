@@ -1,0 +1,127 @@
+UTF-8
+
+A Simple Model
+
+A simple model object is a template for unreliable data.
+
+A property that is a number only accepts a number etc.
+It is not possible to define e.g. nullable values, rules or modifiers.
+
+The molding process does not perform any conversion;
+a value is accepted or discarded as it is.
+
+It is the user's responsibility to carefully define the proper model.
+A faulty model will produce faulty results.
+
+Examples for the function "getModeledObject"
+
+1. An empty data
+
+The data is empty.
+The model has one string property with an empty string as the default value.
+The result has the only allowed property with the default value.
+
+  data = {};
+ model = { name: '' };
+result = { name: '' };
+
+2. An invalid property
+
+The data has an invalid property that is ignored.
+
+  data = { id: 123 };
+ model = { name: '' };
+result = { name: '' };
+
+3. A valid property and an invalid type
+
+The data has a valid property with an invalid type.
+The default value is used.
+
+  data = { name: 123 };
+ model = { name: 'Adam' };
+result = { name: 'Adam' };
+
+4. A valid property and an invalid type
+
+The data has a valid property with an invalid type.
+The default value is used. (NaN ja Infinity are numbers in JavaScript.)
+
+  data = { age: 'unknown' };
+ model = { age: NaN };
+result = { age: NaN };
+
+5. A valid property and a valid type
+
+The data has a valid property with a valid type. It is used.
+
+  data = { name: 'Eve' };
+ model = { name: '' };
+result = { name: 'Eve' };
+
+6. A valid property and a valid type
+
+The data has a valid property with a valid type. It is used.
+
+  data = { age: 33 };
+ model = { age: 0 };
+result = { age: 33 };
+
+7. A valid sub-object and missing properties
+
+The data has a valid property; the sub-object "misc".
+Because it does not have the required properties,
+the default ones are used.
+
+  data = { misc: {} };
+ model = { misc: { colon: ':', dot: '.' } };
+result = { misc: { colon: ':', dot: '.' } };
+
+8. An array requires a type definition
+
+An array requires a bit special model.
+The very first item describes the type of the items in the array.
+
+  data = { levels: [1, 'two', 3] };
+ model = { levels: [0] };
+result = { levels: [1, 3] };
+
+9. An array of objects
+
+The last object in the data has an invalid type for the property
+so the default value is used.
+
+  data = { objects: [{ id: 1 }, { id: 2 }, { id: '3' }] };
+ model = { objects: [{ id: 0 }] };
+result = { objects: [{ id: 1 }, { id: 2 }, { id: 0 }] };
+
+10. An array of arrays
+
+The model describes that "levels" must contain an array
+that contains arrays of numbers. The last array is included
+as an empty array even though it originally contains only invalid values.
+This behavior ensures that a property has at least an empty array.
+
+  data = { levels: [[1, 2], [3, 4], ['foo'], 5] };
+ model = { levels: [[0]] };
+result = { levels: [[1, 2], [3, 4], []] };
+
+11. An object with many properties
+
+The data contains valid properties but the values are invalid.
+
+data = {
+	age: '33',
+	isActive: [true],
+	name: 1337
+};
+model = {
+	age: 0,
+	isActive: false,
+	name: ''
+};
+result = {
+	age: 0,
+	isActive: false,
+	name: ''
+};

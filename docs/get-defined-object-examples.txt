@@ -1,0 +1,280 @@
+UTF-8
+
+A More Complicated Definition Model
+
+A more complicated definition model object is a template for unreliable data.
+
+The user-defined definitions are automatically applied on the built-in ones.
+Therefore, only the properties that differ must be defined by the user.
+
+The default value "def" is returned if the property has an invalid value.
+
+The molding process does not perform any conversion;
+a value is accepted or discarded as it is.
+
+It is the user's responsibility to carefully define the proper model.
+A faulty model will produce faulty results.
+
+The types and default values of a model:
+
+	array:
+		def: []
+		isNullable: false
+		isUnique: false
+		model: {
+			type: 'number'
+		}
+		limitLength: -1
+
+		The array is limited to a single type.
+		The array contains only unique values if "isUnique" is true.
+		There is no limit for the count of array items
+		if "limitLength" is -1.
+
+	boolean:
+		def: false
+		isNullable: false
+
+		A boolean can be a boolean or null.
+
+	dateString:
+		def: '0000-01-01'
+		delimiter: '-'
+		isNullable: false
+
+		The format is "yyyy-mm-dd".
+		Supports years from -9999 to 9999.
+		Only a valid date is accepted as a date string.
+		See "isDateString" for more information.
+
+	dateTimeString:
+		def: '0000-01-01 00:00:00'
+		delimiterDate: '-'
+		delimiterTime: ':'
+		delimiterType: ' '
+		foasType: ''
+		isNullable: false
+
+		The format is "yyyy-mm-dd hh:ss:ii".
+		Supports years from -9999 to 9999.
+		Only a valid date-time is accepted as a date-time string.
+		See "isDateTimeString" for more information.
+
+	number:
+		def: 0
+		isInt: false
+		isNaNable: false
+		isNullable: false
+		max: Number.MAX_VALUE
+		min: -Number.MAX_VALUE
+
+		A number is a JavaScript number.
+		Only integer numbers are accepted if "isInt" is true.
+		The values "max" and "min" set the range of accepted values.
+		A null or NaN value is not limited by "max" and "min".
+
+	object:
+		def: {}
+		isNullable: false
+		model: {}
+
+		A model can have sub-models (recursive).
+		The default value is not molded with the sub-model.
+
+	string:
+		def: ''
+		isNullable: false
+		maxChars: -1
+		minChars: -1
+
+		The values "maxChars" and "minChars"
+		set the range of accepted (character) lengths.
+		The lengths are calculated in Unicode characters:
+		The length of string "😀" is 2 but its character length is 1.
+		There is no maximum limit if "maxChars" is -1.
+		There is no minimum limit if "minChars" is -1.
+		A null value is not limited by "maxChars" and "minChars".
+
+	timeString:
+		def: '00:00:00'
+		delimiter: ':'
+		foasType: ''
+		isNullable: false
+
+		The format is "hh:ii:ss".
+		An empty string is a valid time string; it means zero.
+		Only a valid time is accepted as a time string.
+		See "isTimeString" for more information.
+
+Examples for the function "getDefinedObject"
+
+1. An empty data
+
+The data is empty.
+The model defines the property "name" which is a string.
+The result is an empty string for "name".
+
+data = {};
+model = {
+	name: {
+		type: 'string'
+		// The rest of the properties (e.g. "isNullable")
+		// are automatically applied from the built-in definition.
+	}
+};
+result = { name: '' };
+
+2. A nullable string
+
+data = {
+	name: null
+};
+model = {
+	name: {
+		type: 'string',
+		def: 'The default string',
+		isNullable: true
+	}
+};
+result = { name: null };
+
+3. An invalid value for a boolean
+
+data = { isActive: null };
+model = {
+	isActive: {
+		type: 'boolean',
+		// "isNullable" is false by default
+	}
+};
+result = { isActive: false };
+
+4. A valid number
+
+If "isNaNable" were false, the resulting number would be the default 0.
+
+data = { age: NaN };
+model = {
+	age: {
+		type: 'number',
+		isNaNable: true
+	}
+};
+result = { age: NaN };
+
+5. Filter out too short and too long strings from an array
+
+To discard an invalid item from an array,
+the "def" value of the sub-model must be undefined.
+
+data = {
+	tags: ['a', 'abc', 'beta', 'beta', 'gamma', 'sixlon', 'atoolongtag']
+};
+model = {
+	tags: {
+		type: 'array',
+		model: {
+			type: 'string',
+			def: undefined,
+			maxChars: 5,
+			minChars: 4
+		}
+	}
+};
+result = { tags: ['beta', 'beta', 'gamma'] };
+
+6. Get unique integer numbers between -10 and 10.
+
+data = {
+	codes: ['a', null, -11, -5, 3.14, NaN, 8.9, 9, 10, Infinity, {}, 99 ]
+};
+model = {
+	codes: {
+		type: 'array',
+		isUnique: true,
+		model: {
+			type: 'number',
+			def: undefined,
+			isInt: true,
+			max: 10,
+			min: -10
+		}
+	}
+};
+result = { codes: [-5, 9, 10] };
+
+7. Valid enough data for a model with a sub-model
+
+data = {
+	age: Infinity,
+	isActive: true,
+	measurement: {
+		height: 200,
+		weight: 99.5,
+		width: 80
+	}
+};
+model = {
+	age: {
+		type: 'number',
+		def: NaN,
+		isNaNable: true,
+		max: 999
+	},
+	isActive: {
+		type: 'boolean'
+	},
+	measurement: {
+		type: 'object',
+		def: {
+			height: 0,
+			width: 0
+		},
+		model: {
+			height: {
+				type: 'number'
+			},
+			weight: {
+				type: 'number'
+			}
+		}
+	}
+};
+result = {
+	age: NaN,
+	isActive: true,
+	measurement: {
+		height: 200,
+		weight: 99.5
+	}
+};
+
+8. Valid date and time values
+
+data = {
+	date: '1999-12-31',
+	dateTime: '1999-12-31 23:59:59',
+	time: '23:59:59',
+	minusYear: '-1999:12:31'
+};
+model = {
+	date: {
+		type: 'dateString'
+	},
+	dateTime: {
+		type: 'dateTimeString'
+	},
+	time: {
+		type: 'timeString'
+	},
+	minusYear: {
+		type: 'dateString',
+		delimiter: ':'
+	}
+};
+result = {
+	date: '1999-12-31',
+	dateTime: '1999-12-31 23:59:59',
+	time: '23:59:59',
+	minusYear: '-1999:12:31'
+};
